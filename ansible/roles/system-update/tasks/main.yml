@@ -1,0 +1,3 @@
+---
+- name: include OS-specific update tasks
+  include_tasks: "{{ ansible_facts['os_family'] }}.yml"

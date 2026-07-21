@@ -1,0 +1,6 @@
+---
+- name: update apk cache and upgrade
+  apk:
+    update_cache: yes
+    upgrade: yes
+  become: true

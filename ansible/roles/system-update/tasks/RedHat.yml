@@ -1,0 +1,25 @@
+---
+- name: upgrade all packages
+  dnf:
+    name: "*"
+    state: latest
+  become: true
+  register: dnf_upgrade_result
+
+- name: remove unused dependencies
+  dnf:
+    autoremove: yes
+  become: true
+
+- name: check if reboot is needed
+  command: dnf needs-restarting -r
+  register: needs_restart
+  failed_when: false
+  changed_when: false
+  become: true
+
+- name: reboot if required
+  reboot:
+    msg: "Rebooting after dnf upgrade"
+  become: true
+  when: needs_restart.rc == 1

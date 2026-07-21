@@ -1,0 +1,26 @@
+---
+- name: update apt cache
+  apt:
+    update_cache: yes
+  become: true
+
+- name: install prerequisites
+  apt:
+    name:
+      - gzip
+      - tar
+    state: present
+  become: true
+
+- name: run technitium dns install script
+  shell: curl -sSL https://download.technitium.com/dns/install.sh | bash
+  args:
+    creates: /etc/dns
+  become: true
+
+- name: ensure technitium dns service is running
+  systemd:
+    name: dns
+    state: started
+    enabled: yes
+  become: true

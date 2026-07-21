@@ -1,0 +1,41 @@
+---
+- name: install docker
+  include_role:
+    name: docker-host
+
+- name: create monitoring directory
+  file:
+    path: /opt/monitoring
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: deploy prometheus config
+  template:
+    src: prometheus.yml.j2
+    dest: /opt/monitoring/prometheus.yml
+  become: true
+
+- name: deploy pve exporter config
+  template:
+    src: pve-exporter.yml.j2
+    dest: /opt/monitoring/pve-exporter.yml
+  become: true
+
+- name: deploy kromgo config
+  template:
+    src: kromgo.yaml.j2
+    dest: /opt/monitoring/kromgo.yaml
+  become: true
+
+- name: deploy docker-compose stack
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+  become: true
+
+- name: bring up the stack
+  community.docker.docker_compose_v2:
+    project_src: /opt/monitoring
+    state: present
+  become: true

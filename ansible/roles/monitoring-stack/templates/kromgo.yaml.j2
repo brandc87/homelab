@@ -1,0 +1,27 @@
+badges:
+  - id: pve_cpu_usage
+    title: CPU
+    query: 'pve_cpu_usage_ratio{id="node/pve"} * 100'
+    valueExpr: 'humanizeFloat(math.round(result * 10.0) / 10.0) + "%"'
+    colorExpr: 'colorScale(result, [50.0, 80.0], ["green", "orange", "red"])'
+
+  - id: pve_memory_usage
+    title: RAM
+    query: 'pve_memory_usage_bytes{id="node/pve"} / pve_memory_size_bytes{id="node/pve"} * 100'
+    valueExpr: 'humanizeFloat(math.round(result * 10.0) / 10.0) + "%"'
+    colorExpr: 'colorScale(result, [50.0, 80.0], ["green", "orange", "red"])'
+
+  - id: pve_uptime_days
+    title: Uptime
+    query: 'pve_uptime_seconds{id="node/pve"} / 86400'
+    valueExpr: 'humanizeFloat(math.round(result * 10.0) / 10.0) + " days"'
+
+  - id: speedtest_download
+    title: Download
+    query: 'speedtest_download_bits_per_second / 1000000'
+    valueExpr: 'humanizeFloat(math.round(result)) + " Mbps"'
+
+  - id: speedtest_upload
+    title: Upload
+    query: 'speedtest_upload_bits_per_second / 1000000'
+    valueExpr: 'humanizeFloat(math.round(result)) + " Mbps"'

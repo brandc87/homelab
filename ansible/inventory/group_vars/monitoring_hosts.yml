@@ -1,0 +1,3 @@
+---
+pve_monitoring_token: "{{ lookup('community.general.onepassword', 'pve-monitoring-token', vault='Homelab', field='credential') }}"
+proxmox_host: "10.15.1.10"

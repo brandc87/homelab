@@ -1,0 +1,9 @@
+---
+- name: re-run Technitium install script to update
+  shell: curl -sSL https://download.technitium.com/dns/install.sh | bash
+  become: true
+  register: technitium_update
+
+- name: show update output
+  debug:
+    var: technitium_update.stdout_lines

@@ -1,0 +1,5 @@
+![CPU](https://stats.carlbrand.dev/badges/pve_cpu_usage)
+![RAM](https://stats.carlbrand.dev/badges/pve_memory_usage)
+![Uptime](https://stats.carlbrand.dev/badges/pve_uptime_days)
+![Download](https://stats.carlbrand.dev/badges/speedtest_download)
+![Upload](https://stats.carlbrand.dev/badges/speedtest_upload)

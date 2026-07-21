@@ -1,0 +1,5 @@
+---
+- name: install technitium dns
+  hosts: dns
+  roles:
+    - technitium-dns
