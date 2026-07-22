@@ -1,0 +1,52 @@
+---
+- name: add tailscale apt key
+  get_url:
+    url: https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    mode: '0644'
+  become: true
+
+- name: add tailscale apt repo
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian bookworm main"
+    state: present
+  become: true
+
+- name: install tailscale
+  apt:
+    name: tailscale
+    state: present
+    update_cache: yes
+  become: true
+
+- name: enable ip forwarding
+  sysctl:
+    name: "{{ item }}"
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  loop:
+    - net.ipv4.ip_forward
+    - net.ipv6.conf.all.forwarding
+  become: true
+
+- name: check current tailscale status
+  command: tailscale status --json
+  register: ts_status
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: bring up tailscale
+  shell: >
+    tailscale up
+    --reset
+    --authkey={{ tailscale_authkey }}
+    {{ '--advertise-routes=' + tailscale_advertise_routes if tailscale_advertise_routes else '' }}
+    --accept-dns=false
+    --hostname={{ inventory_hostname }}
+  become: true
+  when: >
+    ts_status.rc != 0 or
+    '"BackendState":"Running"' not in ts_status.stdout

@@ -1,0 +1,5 @@
+---
+- name: configure tailscale
+  hosts: dns:proxmox
+  roles:
+    - tailscale

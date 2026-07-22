@@ -18,13 +18,18 @@ services:
       - "9221:9221"
     restart: unless-stopped
 
-  speedtest-exporter:
-    image: miguelndecarvalho/speedtest-exporter:latest
-    container_name: speedtest-exporter
+  unpoller:
+    image: ghcr.io/unpoller/unpoller:latest
+    container_name: unpoller
     environment:
-      CACHE_FOR: "24h"
+      UP_UNIFI_DEFAULT_URL: "https://10.15.30.1"
+      UP_UNIFI_DEFAULT_USER: "{{ unifi_unpoller_user }}"
+      UP_UNIFI_DEFAULT_PASS: "{{ unifi_unpoller_pass }}"
+      UP_UNIFI_DEFAULT_VERIFY_SSL: "false"
+      UP_PROMETHEUS_HTTP_LISTEN: "0.0.0.0:9130"
+      UP_INFLUXDB_DISABLE: "true"
     ports:
-      - "9798:9798"
+      - "9130:9130"
     restart: unless-stopped
 
   grafana:

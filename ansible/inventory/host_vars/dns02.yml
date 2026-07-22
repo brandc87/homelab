@@ -1,0 +1,2 @@
+---
+tailscale_advertise_routes: "10.15.30.0/24,10.15.40.0/24"

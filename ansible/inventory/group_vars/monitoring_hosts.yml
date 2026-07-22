@@ -1,3 +1,5 @@
 ---
 pve_monitoring_token: "{{ lookup('community.general.onepassword', 'pve-monitoring-token', vault='Homelab', field='credential') }}"
 proxmox_host: "10.15.1.10"
+unifi_unpoller_user: "{{ lookup('community.general.onepassword', 'unpoller', vault='Homelab', field='username') }}"
+unifi_unpoller_pass: "{{ lookup('community.general.onepassword', 'unpoller', vault='Homelab', field='password') }}"
