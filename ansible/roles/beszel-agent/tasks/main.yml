@@ -1,0 +1,16 @@
+---
+- name: Download and run Beszel agent install script
+  shell: |
+    curl -sL https://get.beszel.dev -o /tmp/install-agent.sh
+    chmod +x /tmp/install-agent.sh
+    /tmp/install-agent.sh -p 45876 -k "{{ beszel_hub_key }}" -t "{{ beszel_universal_token }}" -url "{{ beszel_hub_url }}" --auto-update true
+  become: true
+  args:
+    creates: /etc/systemd/system/beszel-agent.service
+
+- name: ensure beszel agent is running and enabled
+  systemd:
+    name: beszel-agent
+    state: started
+    enabled: yes
+  become: true

@@ -1,0 +1,4 @@
+---
+beszel_hub_key: "{{ lookup('community.general.onepassword', 'beszel-hub-key', vault='Homelab', field='credential') }}"
+beszel_universal_token: "{{ lookup('community.general.onepassword', 'beszel-universal-token', vault='Homelab', field='credential') }}"
+beszel_hub_url: "http://10.15.1.13:8090"

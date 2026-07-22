@@ -17,7 +17,7 @@ scrape_configs:
         replacement: pve-exporter:9221
 
   - job_name: 'speedtest'
-    scrape_interval: 30m
+    scrape_interval: 6h
     scrape_timeout: 60s
     static_configs:
       - targets: ['speedtest-exporter:9798']

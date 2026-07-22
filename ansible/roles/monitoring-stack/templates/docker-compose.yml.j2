@@ -21,6 +21,8 @@ services:
   speedtest-exporter:
     image: miguelndecarvalho/speedtest-exporter:latest
     container_name: speedtest-exporter
+    environment:
+      CACHE_FOR: "24h"
     ports:
       - "9798:9798"
     restart: unless-stopped

@@ -16,6 +16,11 @@ badges:
     query: 'pve_uptime_seconds{id="node/pve"} / 86400'
     valueExpr: 'humanizeFloat(math.round(result * 10.0) / 10.0) + " days"'
 
+  - id: pve_version
+    title: PVE Version
+    query: 'pve_version_info{instance="10.15.1.10:8006"}'
+    valueExpr: 'labels.version'
+
   - id: speedtest_download
     title: Download
     query: 'speedtest_download_bits_per_second / 1000000'
