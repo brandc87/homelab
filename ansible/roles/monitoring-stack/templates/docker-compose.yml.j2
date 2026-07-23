@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.13.1
     container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
   pve-exporter:
-    image: prompve/prometheus-pve-exporter:latest
+    image: prompve/prometheus-pve-exporter:3.9.0
     container_name: pve-exporter
     volumes:
       - ./pve-exporter.yml:/etc/prometheus/pve.yml
@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
 
   unpoller:
-    image: ghcr.io/unpoller/unpoller:latest
+    image: ghcr.io/unpoller/unpoller:v3.3.3
     container_name: unpoller
     environment:
       UP_UNIFI_DEFAULT_URL: "https://10.15.30.1"
@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.1.1
     container_name: grafana
     volumes:
       - grafana-data:/var/lib/grafana
@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   kromgo:
-    image: ghcr.io/home-operations/kromgo:latest
+    image: ghcr.io/home-operations/kromgo:0.15.1
     container_name: kromgo
     volumes:
       - ./kromgo.yaml:/config/config.yaml:ro
