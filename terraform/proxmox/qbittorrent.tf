@@ -1,15 +1,16 @@
-resource "proxmox_virtual_environment_container" "monitoring" {
+resource "proxmox_virtual_environment_container" "qbittorrent" {
+  provider     = proxmox.pam_auth
   node_name    = "pve"
-  vm_id        = 303
+  vm_id        = 109
   unprivileged = true
-  tags         = ["monitoring"]
+  tags         = ["downloader", "arr"]
 
   initialization {
-    hostname = "monitoring"
+    hostname = "qbittorrent"
 
     ip_config {
       ipv4 {
-        address = "10.15.30.52/24"
+        address = "10.15.30.19/24"
         gateway = "10.15.30.1"
       }
     }
@@ -25,17 +26,17 @@ resource "proxmox_virtual_environment_container" "monitoring" {
     type             = "debian"
   }
 
-  cpu {
-    cores = 2
-  }
-
-  memory {
-    dedicated = 2048
-  }
+  cpu { cores = 2 }
+  memory { dedicated = 2048 }
 
   disk {
     datastore_id = "local-lvm"
-    size         = 16
+    size         = 8
+  }
+
+  mount_point {
+    volume = "/tank/media_root"
+    path   = "/mnt/media_root"
   }
 
   network_interface {
@@ -47,8 +48,4 @@ resource "proxmox_virtual_environment_container" "monitoring" {
   features {
     nesting = true
   }
-}
-
-output "monitoring_ip" {
-  value = proxmox_virtual_environment_container.monitoring.initialization[0].ip_config[0].ipv4[0].address
 }

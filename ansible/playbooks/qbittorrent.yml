@@ -1,0 +1,5 @@
+---
+- name: Deploy qBittorrent
+  hosts: downloaders
+  roles:
+    - qbittorrent

@@ -1,0 +1,9 @@
+---
+discord_bot_token: "{{ lookup('community.general.onepassword', 'amp-bot-discord-token', vault='Homelab', field='credential') }}"
+webhook_shared_secret: "{{ lookup('community.general.onepassword', 'amp-bot-webhook-secret', vault='Homelab', field='credential') }}"
+amp_webhook_token: "{{ lookup('community.general.onepassword', 'amp-webhook-trigger-token', vault='Homelab', field='credential') }}"
+
+discord_guild_id: "1329040676943564870"
+discord_channel_id: "1392197054326902784"
+amp_url: "http://10.15.30.51:8080"
+amp_instance_id: "d1baf97f-8d33-4c01-bc78-9844dd759b62"

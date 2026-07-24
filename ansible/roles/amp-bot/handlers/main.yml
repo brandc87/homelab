@@ -1,0 +1,33 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Download dependencies and generate go.sum
+  command:
+    cmd: go mod tidy
+    chdir: /opt/amp-discord-bot/src
+  become: true
+  become_user: amp-bot
+  environment:
+    HOME: /opt/amp-discord-bot
+    GOCACHE: /opt/amp-discord-bot/.cache
+  changed_when: true
+
+- name: rebuild and restart bot
+  command:
+    cmd: go build -o /opt/amp-discord-bot/amp-discord-bot .
+    chdir: /opt/amp-discord-bot/src
+  become: true
+  become_user: amp-bot
+  environment:
+    HOME: /opt/amp-discord-bot
+    GOCACHE: /opt/amp-discord-bot/.cache
+  notify: restart bot
+
+- name: restart bot
+  systemd:
+    name: amp-discord-bot
+    state: restarted
+  become: true

@@ -1,5 +1,5 @@
 ---
-- name: nnstall beszel agent
+- name: Install beszel agent
   hosts: dns
   roles:
     - beszel-agent

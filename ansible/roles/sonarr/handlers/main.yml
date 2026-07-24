@@ -1,0 +1,6 @@
+---
+- name: restart sonarr
+  systemd:
+    name: sonarr
+    state: restarted
+  become: true

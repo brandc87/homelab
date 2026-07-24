@@ -1,0 +1,2 @@
+---
+protonvpn_wireguard_key: "{{ lookup('community.general.onepassword', 'protonvpn-wireguard-key', vault='Homelab', field='credential') }}"

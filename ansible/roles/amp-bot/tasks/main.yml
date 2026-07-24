@@ -1,0 +1,133 @@
+---
+- name: Install sudo
+  apt:
+    name: sudo
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Remove distro Go package if present
+  apt:
+    name: golang-go
+    state: absent
+  become: true
+
+- name: Download Go toolchain
+  get_url:
+    url: https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+    dest: /tmp/go.tar.gz
+    mode: '0644'
+  become: true
+
+- name: Remove any existing Go install
+  file:
+    path: /usr/local/go
+    state: absent
+  become: true
+
+- name: Extract Go toolchain
+  unarchive:
+    src: /tmp/go.tar.gz
+    dest: /usr/local
+    remote_src: true
+  become: true
+
+- name: Symlink go binary to PATH
+  file:
+    src: /usr/local/go/bin/go
+    dest: /usr/local/bin/go
+    state: link
+  become: true
+
+- name: create bot user
+  user:
+    name: amp-bot
+    system: yes
+    shell: /usr/sbin/nologin
+    home: /opt/amp-discord-bot
+    create_home: yes
+  become: true
+
+- name: create source directory
+  file:
+    path: /opt/amp-discord-bot/src
+    state: directory
+    owner: amp-bot
+    mode: '0755'
+  become: true
+
+- name: copy go source files
+  copy:
+    src: "src/{{ item }}"
+    dest: "/opt/amp-discord-bot/src/{{ item }}"
+    owner: amp-bot
+    mode: '0644'
+  loop:
+    - go.mod
+    - main.go
+    - amp.go
+    - discord.go
+  become: true
+  notify: rebuild and restart bot
+
+- name: create env directory
+  file:
+    path: /etc/amp-discord-bot
+    state: directory
+    mode: '0750'
+  become: true
+
+- name: deploy env file
+  template:
+    src: env.j2
+    dest: /etc/amp-discord-bot/env
+    mode: '0600'
+  become: true
+  notify: restart bot
+
+- name: deploy systemd unit
+  template:
+    src: amp-discord-bot.service.j2
+    dest: /etc/systemd/system/amp-discord-bot.service
+  become: true
+  notify:
+    - reload systemd
+    - restart bot
+
+- name: Download dependencies and generate go.sum
+  command:
+    cmd: go mod tidy
+    chdir: /opt/amp-discord-bot/src
+  become: true
+  become_user: amp-bot
+  environment:
+    HOME: /opt/amp-discord-bot
+    GOCACHE: /opt/amp-discord-bot/.cache
+  changed_when: true
+
+- name: Build the binary
+  command:
+    cmd: go build -o /opt/amp-discord-bot/amp-discord-bot .
+    chdir: /opt/amp-discord-bot/src
+  become: true
+  become_user: amp-bot
+  environment:
+    HOME: /opt/amp-discord-bot
+    GOCACHE: /opt/amp-discord-bot/.cache
+  register: build_result
+  changed_when: build_result.rc == 0
+
+- name: ensure binary is executable
+  file:
+    path: /opt/amp-discord-bot/amp-discord-bot
+    mode: '0755'
+    owner: amp-bot
+  become: true
+
+- name: ensure service is enabled and running
+  systemd:
+    name: amp-discord-bot
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  become: true

@@ -1,0 +1,23 @@
+---
+- name: Install Docker
+  include_role:
+    name: docker-host
+
+- name: Create app directory
+  file:
+    path: /opt/downloads
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Deploy docker-compose stack
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/downloads/docker-compose.yml
+  become: true
+
+- name: Bring up the stack
+  community.docker.docker_compose_v2:
+    project_src: /opt/downloads
+    state: present
+  become: true

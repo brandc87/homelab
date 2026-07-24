@@ -1,0 +1,82 @@
+---
+- name: Install prerequisites
+  apt:
+    name:
+      - curl
+      - tar
+      - mediainfo
+      - sqlite3
+      - libicu72
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Create sonarr group
+  group:
+    name: sonarr
+    gid: 10000
+  become: true
+
+- name: Create sonarr user
+  user:
+    name: sonarr
+    uid: 1000
+    group: sonarr
+    shell: /usr/sbin/nologin
+    create_home: no
+  become: true
+
+- name: Create data directory
+  file:
+    path: /var/lib/sonarr
+    state: directory
+    owner: sonarr
+    group: sonarr
+    mode: '0755'
+  become: true
+
+- name: Download Sonarr release
+  get_url:
+    url: "https://services.sonarr.tv/v1/download/main/latest?version=4&os=linux&arch=x64"
+    dest: /tmp/sonarr.tar.gz
+    mode: '0644'
+  become: true
+  register: sonarr_download
+
+- name: Remove old install if updating
+  file:
+    path: /opt/Sonarr
+    state: absent
+  become: true
+  when: sonarr_download.changed
+
+- name: Extract Sonarr
+  unarchive:
+    src: /tmp/sonarr.tar.gz
+    dest: /opt
+    remote_src: true
+  become: true
+  when: sonarr_download.changed
+
+- name: Set ownership on Sonarr install directory
+  file:
+    path: /opt/Sonarr
+    owner: sonarr
+    group: sonarr
+    recurse: true
+  become: true
+
+- name: Deploy systemd unit
+  template:
+    src: sonarr.service.j2
+    dest: /etc/systemd/system/sonarr.service
+  become: true
+  notify: restart sonarr
+
+- name: Ensure Sonarr is running and enabled
+  systemd:
+    name: sonarr
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  become: true

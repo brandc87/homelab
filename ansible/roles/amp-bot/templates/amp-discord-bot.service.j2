@@ -1,0 +1,14 @@
+[Unit]
+Description=AMP Discord Bot
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/amp-discord-bot/env
+ExecStart=/opt/amp-discord-bot/amp-discord-bot
+Restart=on-failure
+RestartSec=5
+User=amp-bot
+
+[Install]
+WantedBy=multi-user.target

@@ -1,15 +1,15 @@
-resource "proxmox_virtual_environment_container" "monitoring" {
+resource "proxmox_virtual_environment_container" "amp-bot" {
   node_name    = "pve"
-  vm_id        = 303
+  vm_id        = 304
   unprivileged = true
-  tags         = ["monitoring"]
+  tags         = ["discord-bot"]
 
   initialization {
-    hostname = "monitoring"
+    hostname = "amp-bot"
 
     ip_config {
       ipv4 {
-        address = "10.15.30.52/24"
+        address = "10.15.30.53/24"
         gateway = "10.15.30.1"
       }
     }
@@ -26,16 +26,16 @@ resource "proxmox_virtual_environment_container" "monitoring" {
   }
 
   cpu {
-    cores = 2
+    cores = 1
   }
 
   memory {
-    dedicated = 2048
+    dedicated = 512
   }
 
   disk {
     datastore_id = "local-lvm"
-    size         = 16
+    size         = 4
   }
 
   network_interface {
@@ -47,8 +47,4 @@ resource "proxmox_virtual_environment_container" "monitoring" {
   features {
     nesting = true
   }
-}
-
-output "monitoring_ip" {
-  value = proxmox_virtual_environment_container.monitoring.initialization[0].ip_config[0].ipv4[0].address
 }

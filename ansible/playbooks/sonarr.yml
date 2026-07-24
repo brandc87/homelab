@@ -1,0 +1,5 @@
+---
+- name: Deploy Sonarr
+  hosts: sonarr-anime
+  roles:
+    - sonarr
