@@ -1,0 +1,5 @@
+---
+bootstrap_timezone: "Europe/London"
+bootstrap_disable_password_auth: true
+bootstrap_install_fail2ban: true
+bootstrap_install_unattended_upgrades: true

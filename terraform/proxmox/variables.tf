@@ -7,3 +7,7 @@ variable "pve_token_secret" {
   type      = string
   sensitive = true
 }
+
+variable "ssh_public_key" {
+  type = string
+}
