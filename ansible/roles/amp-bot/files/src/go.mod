@@ -2,7 +2,7 @@ module amp-discord-bot
 
 go 1.24
 
-require github.com/bwmarrin/discordgo v0.28.1
+require github.com/bwmarrin/discordgo v0.29.0
 
 require (
 	github.com/gorilla/websocket v1.5.3 // indirect
