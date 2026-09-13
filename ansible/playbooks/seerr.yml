@@ -1,0 +1,6 @@
+---
+- name: Deploy Seerr
+  hosts: seerr_servers
+  serial: 1
+  roles:
+    - seerr

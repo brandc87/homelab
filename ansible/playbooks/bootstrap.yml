@@ -1,0 +1,5 @@
+---
+- name: Apply baseline configuration
+  hosts: all
+  roles:
+    - bootstrap

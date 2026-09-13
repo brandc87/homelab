@@ -1,0 +1,5 @@
+---
+- name: Deploy Prowlarr
+  hosts: prowlarr_servers
+  roles:
+    - prowlarr

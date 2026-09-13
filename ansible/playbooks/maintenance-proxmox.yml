@@ -1,0 +1,6 @@
+---
+- name: Update Proxmox without an automatic reboot
+  hosts: proxmox
+  serial: 1
+  roles:
+    - system-update

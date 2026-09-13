@@ -1,0 +1,3 @@
+---
+# Package upgrades are deliberate, but reboots require an explicit opt-in.
+system_update_reboot: false

@@ -1,0 +1,6 @@
+---
+- name: Update LXC operating systems
+  hosts: lxcs:!dns
+  serial: 1
+  roles:
+    - system-update

@@ -1,0 +1,6 @@
+---
+- name: Deploy Radarr instances
+  hosts: radarr_servers
+  serial: 1
+  roles:
+    - radarr

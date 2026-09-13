@@ -1,0 +1,115 @@
+---
+- name: Install Radarr prerequisites
+  ansible.builtin.apt:
+    name:
+      - curl
+      - libicu72
+      - mediainfo
+      - sqlite3
+      - tar
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create Radarr group
+  ansible.builtin.group:
+    name: "{{ radarr_group }}"
+    gid: "{{ radarr_gid }}"
+    system: true
+    state: present
+  become: true
+
+- name: Create Radarr user
+  ansible.builtin.user:
+    name: "{{ radarr_user }}"
+    uid: "{{ radarr_uid }}"
+    group: "{{ radarr_group }}"
+    home: "{{ radarr_data_directory }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+    system: true
+    state: present
+  become: true
+
+- name: Create Radarr data directory
+  ansible.builtin.file:
+    path: "{{ radarr_data_directory }}"
+    state: directory
+    owner: "{{ radarr_user }}"
+    group: "{{ radarr_group }}"
+    mode: "0775"
+  become: true
+
+- name: Download pinned Radarr release
+  ansible.builtin.get_url:
+    url: "{{ radarr_download_url }}"
+    dest: "/tmp/radarr-{{ radarr_version }}.tar.gz"
+    mode: "0644"
+    checksum: "{{ radarr_download_checksum }}"
+  register: radarr_download
+  become: true
+
+- name: Stop Radarr before replacing binaries
+  ansible.builtin.systemd:
+    name: radarr
+    state: stopped
+  when: radarr_download.changed
+  failed_when: false
+  become: true
+
+- name: Remove previous Radarr installation
+  ansible.builtin.file:
+    path: "{{ radarr_install_directory }}"
+    state: absent
+  when: radarr_download.changed
+  become: true
+
+- name: Extract Radarr release
+  ansible.builtin.unarchive:
+    src: "/tmp/radarr-{{ radarr_version }}.tar.gz"
+    dest: /opt
+    remote_src: true
+  when: radarr_download.changed
+  become: true
+
+- name: Set Radarr installation ownership
+  ansible.builtin.file:
+    path: "{{ radarr_install_directory }}"
+    owner: root
+    group: "{{ radarr_group }}"
+    mode: "0755"
+    recurse: true
+  become: true
+
+- name: Install Radarr systemd unit
+  ansible.builtin.template:
+    src: radarr.service.j2
+    dest: /etc/systemd/system/radarr.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Radarr
+  become: true
+
+- name: Enable and start Radarr
+  ansible.builtin.systemd:
+    name: radarr
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Flush handlers before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Radarr responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ radarr_port }}/"
+    status_code:
+      - 200
+      - 302
+    return_content: false
+  register: radarr_health
+  retries: 10
+  delay: 3
+  until: radarr_health is succeeded

@@ -1,5 +1,0 @@
----
-- name: deploy amp discord bot
-  hosts: bots
-  roles:
-    - amp-bot

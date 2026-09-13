@@ -1,0 +1,13 @@
+---
+host_firewall_rules:
+  - port: "7777"
+    comment: SABnzbd web interface
+
+sabnzbd_version: "5.1.1"
+
+application_backup_name: sabnzbd
+application_backup_service: sabnzbd
+application_backup_paths:
+  - /var/lib/sabnzbd
+application_backup_restore_owner: sabnzbd
+application_backup_restore_group: media

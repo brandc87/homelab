@@ -1,0 +1,17 @@
+---
+- name: Verify Technitium answers a recursive DNS query
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/dig
+      - +short
+      - +time=3
+      - +tries=1
+      - "@127.0.0.1"
+      - "{{ technitium_health_query }}"
+      - A
+  register: technitium_dns_health
+  changed_when: false
+  failed_when: technitium_dns_health.rc != 0 or not technitium_dns_health.stdout
+  retries: 10
+  delay: 3
+  until: technitium_dns_health is succeeded

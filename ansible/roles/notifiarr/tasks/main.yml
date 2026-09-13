@@ -1,0 +1,91 @@
+---
+- name: Install Notifiarr repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gpg
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create APT keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Download Go Lift repository signing key
+  ansible.builtin.get_url:
+    url: "{{ notifiarr_apt_key_url }}"
+    dest: "{{ notifiarr_apt_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Read Go Lift signing-key fingerprint
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --show-keys
+      - --with-colons
+      - "{{ notifiarr_apt_key_path }}"
+  register: notifiarr_apt_key_details
+  changed_when: false
+
+- name: Verify Go Lift signing-key fingerprint
+  ansible.builtin.assert:
+    that:
+      - notifiarr_apt_key_fingerprint in notifiarr_apt_key_details.stdout
+    fail_msg: Go Lift repository signing-key fingerprint did not match.
+
+- name: Configure Go Lift Notifiarr repository
+  ansible.builtin.template:
+    src: notifiarr.sources.j2
+    dest: /etc/apt/sources.list.d/notifiarr.sources
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Install pinned Notifiarr client
+  ansible.builtin.apt:
+    name: "notifiarr={{ notifiarr_version }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true
+  become: true
+
+- name: Ensure Notifiarr configuration ownership
+  ansible.builtin.file:
+    path: /etc/notifiarr
+    state: directory
+    owner: notifiarr
+    group: notifiarr
+    mode: "0770"
+  become: true
+
+- name: Enable and start Notifiarr
+  ansible.builtin.systemd:
+    name: notifiarr
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Verify Notifiarr responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ notifiarr_port }}/"
+    status_code:
+      - 200
+      - 302
+      - 401
+      - 403
+    return_content: false
+  register: notifiarr_health
+  retries: 10
+  delay: 3
+  until: notifiarr_health is succeeded

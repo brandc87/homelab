@@ -1,0 +1,13 @@
+---
+host_firewall_rules:
+  - port: "9696"
+    comment: Prowlarr web interface
+
+prowlarr_version: "2.4.0.5397"
+
+application_backup_name: prowlarr
+application_backup_service: prowlarr
+application_backup_paths:
+  - /var/lib/prowlarr
+application_backup_restore_owner: prowlarr
+application_backup_restore_group: prowlarr

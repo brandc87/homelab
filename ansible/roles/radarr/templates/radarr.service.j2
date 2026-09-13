@@ -1,0 +1,22 @@
+[Unit]
+Description=Radarr movie manager
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ radarr_user }}
+Group={{ radarr_group }}
+UMask=0002
+ExecStart={{ radarr_install_directory }}/Radarr -nobrowser -data={{ radarr_data_directory }}
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ radarr_data_directory }} /mnt/media_root /mnt/fast_media_root
+
+[Install]
+WantedBy=multi-user.target

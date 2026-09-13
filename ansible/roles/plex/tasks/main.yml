@@ -1,0 +1,169 @@
+---
+- name: Validate Plex deployment inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+      - ansible_facts['architecture'] == 'x86_64'
+      - plex_version | length > 0
+    fail_msg: Plex is configured only for an AMD64 Debian-family LXC.
+
+- name: Install Plex repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gpg
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create APT keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Download Plex repository signing key
+  ansible.builtin.get_url:
+    url: "{{ plex_apt_key_url }}"
+    dest: "{{ plex_apt_key_download_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: plex_apt_key_download
+  become: true
+
+- name: Read Plex signing-key fingerprint
+  ansible.builtin.command:
+    argv: [gpg, --show-keys, --with-colons, "{{ plex_apt_key_download_path }}"]
+  register: plex_apt_key_details
+  changed_when: false
+
+- name: Verify Plex signing-key fingerprint
+  ansible.builtin.assert:
+    that:
+      - plex_apt_key_fingerprint in plex_apt_key_details.stdout
+    fail_msg: Plex repository signing-key fingerprint did not match.
+
+- name: Check installed Plex keyring
+  ansible.builtin.stat:
+    path: "{{ plex_apt_key_path }}"
+  register: plex_apt_keyring
+
+- name: Install Plex binary keyring
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --batch
+      - --yes
+      - --dearmor
+      - --output
+      - "{{ plex_apt_key_path }}"
+      - "{{ plex_apt_key_download_path }}"
+  when: plex_apt_key_download.changed or not plex_apt_keyring.stat.exists
+  changed_when: true
+  become: true
+
+- name: Set Plex keyring permissions
+  ansible.builtin.file:
+    path: "{{ plex_apt_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Configure official Plex repository
+  ansible.builtin.template:
+    src: plexmediaserver.sources.j2
+    dest: /etc/apt/sources.list.d/plexmediaserver.sources
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Install pinned Plex Media Server
+  ansible.builtin.apt:
+    name: "plexmediaserver={{ plex_version }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true
+  become: true
+
+- name: Create shared media group
+  ansible.builtin.group:
+    name: "{{ plex_media_group }}"
+    gid: "{{ plex_media_gid }}"
+    system: true
+    state: present
+  become: true
+
+- name: Grant Plex media and GPU group access
+  ansible.builtin.user:
+    name: "{{ plex_user }}"
+    groups:
+      - "{{ plex_media_group }}"
+      - video
+    append: true
+  become: true
+  notify: Restart Plex
+
+- name: Create Plex systemd override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/plexmediaserver.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Install Plex systemd override
+  ansible.builtin.template:
+    src: override.conf.j2
+    dest: /etc/systemd/system/plexmediaserver.service.d/override.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart Plex
+
+- name: Verify Plex device passthrough exists
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /dev/dri/card0
+    - /dev/dri/renderD128
+  register: plex_gpu_devices
+
+- name: Require both Plex GPU devices
+  ansible.builtin.assert:
+    that:
+      - plex_gpu_devices.results | map(attribute='stat.exists') | select('equalto', true) | list | length == 2
+    fail_msg: Plex requires both /dev/dri/card0 and /dev/dri/renderD128.
+
+- name: Verify Plex can write to transcode storage
+  ansible.builtin.command:
+    argv: [runuser, -u, "{{ plex_user }}", --, test, -w, "{{ plex_transcode_directory }}"]
+  changed_when: false
+
+- name: Enable and start Plex
+  ansible.builtin.systemd:
+    name: plexmediaserver
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Apply pending Plex restart before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Plex responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ plex_port }}/identity"
+    status_code: 200
+    return_content: false
+  register: plex_health
+  retries: 20
+  delay: 3
+  until: plex_health is succeeded

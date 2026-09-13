@@ -1,0 +1,123 @@
+---
+- name: Install Tautulli prerequisites
+  ansible.builtin.apt:
+    name:
+      - git
+      - python3
+      - python3-requests
+      - python3-setuptools
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create Tautulli group
+  ansible.builtin.group:
+    name: "{{ tautulli_group }}"
+    system: true
+    state: present
+  become: true
+
+- name: Create Tautulli custom scripts directory
+  ansible.builtin.file:
+    path: "{{ tautulli_scripts_directory }}"
+    state: directory
+    owner: root
+    group: "{{ tautulli_group }}"
+    mode: "0750"
+  become: true
+  when: tautulli_kill_stream_enabled | bool
+
+- name: Install pinned JBOPS kill_stream script
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/blacktwin/JBOPS/{{ tautulli_kill_stream_revision }}/killstream/kill_stream.py"
+    dest: "{{ tautulli_scripts_directory }}/kill_stream.py"
+    owner: root
+    group: "{{ tautulli_group }}"
+    mode: "0750"
+    checksum: "{{ tautulli_kill_stream_checksum }}"
+  become: true
+  when: tautulli_kill_stream_enabled | bool
+
+- name: Create Tautulli user
+  ansible.builtin.user:
+    name: "{{ tautulli_user }}"
+    group: "{{ tautulli_group }}"
+    system: true
+    home: "{{ tautulli_data_directory }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+    state: present
+  become: true
+
+- name: Create Tautulli state directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ tautulli_user }}"
+    group: "{{ tautulli_group }}"
+    mode: "0750"
+  loop:
+    - "{{ tautulli_config_directory }}"
+    - "{{ tautulli_data_directory }}"
+  become: true
+
+- name: Create versioned Tautulli installation parent
+  ansible.builtin.file:
+    path: "{{ tautulli_install_root }}/versions"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Check out requested Tautulli release
+  ansible.builtin.git:
+    repo: https://github.com/Tautulli/Tautulli.git
+    dest: "{{ tautulli_install_root }}/versions/{{ tautulli_version }}"
+    version: "v{{ tautulli_version }}"
+    depth: 1
+    single_branch: true
+    update: false
+  become: true
+
+- name: Activate requested Tautulli version
+  ansible.builtin.file:
+    src: "{{ tautulli_install_root }}/versions/{{ tautulli_version }}"
+    dest: "{{ tautulli_install_root }}/current"
+    state: link
+    force: true
+  become: true
+  notify: Restart Tautulli
+
+- name: Install Tautulli systemd unit
+  ansible.builtin.template:
+    src: tautulli.service.j2
+    dest: /etc/systemd/system/tautulli.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart Tautulli
+
+- name: Enable and start Tautulli
+  ansible.builtin.systemd:
+    name: tautulli
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Flush handlers before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Tautulli responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ tautulli_port }}/"
+    status_code:
+      - 200
+      - 302
+    return_content: false
+  register: tautulli_health
+  retries: 10
+  delay: 3
+  until: tautulli_health is succeeded

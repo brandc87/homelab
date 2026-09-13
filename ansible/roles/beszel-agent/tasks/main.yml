@@ -1,16 +1,69 @@
 ---
-- name: Download and run Beszel agent install script
-  shell: |
-    curl -sL https://get.beszel.dev -o /tmp/install-agent.sh
-    chmod +x /tmp/install-agent.sh
-    /tmp/install-agent.sh -p 45876 -k "{{ beszel_hub_key }}" -t "{{ beszel_universal_token }}" -url "{{ beszel_hub_url }}" --auto-update true
+- name: Download Beszel agent installer
+  ansible.builtin.get_url:
+    url: https://get.beszel.dev
+    dest: /tmp/beszel-install-agent.sh
+    mode: "0755"
   become: true
+
+- name: Install Beszel agent
+  ansible.builtin.command:
+    argv:
+      - /bin/bash
+      - /tmp/beszel-install-agent.sh
+      - -p
+      - "{{ beszel_agent_port }}"
+      - -k
+      - "{{ beszel_runtime_hub_key }}"
+      - -t
+      - "{{ beszel_runtime_universal_token }}"
+      - -url
+      - "{{ beszel_hub_url }}"
+      - --auto-update
+      - "true"
   args:
     creates: /etc/systemd/system/beszel-agent.service
+  no_log: true
+  become: true
+
+- name: Create Beszel agent systemd override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/beszel-agent.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Configure Beszel agent connection
+  ansible.builtin.template:
+    src: 10-ansible.conf.j2
+    dest: /etc/systemd/system/beszel-agent.service.d/10-ansible.conf
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
+  become: true
+  notify: Restart Beszel agent
 
 - name: ensure beszel agent is running and enabled
-  systemd:
+  ansible.builtin.systemd:
     name: beszel-agent
     state: started
-    enabled: yes
+    enabled: true
+    daemon_reload: true
   become: true
+
+- name: Apply updated Beszel agent connection before checking it
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Beszel agent can reach the hub
+  ansible.builtin.uri:
+    url: "{{ beszel_hub_url }}/"
+    status_code: 200
+    return_content: false
+  register: beszel_agent_hub_health
+  retries: 10
+  delay: 3
+  until: beszel_agent_hub_health is succeeded

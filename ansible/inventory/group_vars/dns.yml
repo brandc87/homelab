@@ -1,0 +1,27 @@
+---
+# Keep cluster nodes on the same Technitium release. Maintenance updates the
+# secondary first and verifies it before touching the primary.
+technitium_health_port: 53
+technitium_health_query: example.com
+host_firewall_rules:
+  - port: "53"
+    proto: tcp
+    from_ip: 10.15.0.0/16
+    comment: Technitium DNS TCP
+  - port: "53"
+    proto: udp
+    from_ip: 10.15.0.0/16
+    comment: Technitium DNS UDP
+  - port: "53"
+    proto: tcp
+    from_ip: 100.64.0.0/10
+    comment: Technitium DNS TCP over Tailscale
+  - port: "53"
+    proto: udp
+    from_ip: 100.64.0.0/10
+    comment: Technitium DNS UDP over Tailscale
+  - port: "5380"
+    comment: Technitium administration and cluster API
+  - port: "41641"
+    proto: udp
+    comment: Tailscale direct connections

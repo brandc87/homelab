@@ -1,0 +1,10 @@
+---
+beszel_hub_version: 0.18.7
+beszel_hub_port: 8090
+beszel_hub_user: beszel
+beszel_hub_group: beszel
+beszel_hub_data_directory: /var/lib/beszel
+beszel_hub_install_root: /opt/beszel
+beszel_hub_architectures:
+  x86_64: amd64
+  aarch64: arm64

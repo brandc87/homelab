@@ -1,0 +1,7 @@
+---
+- name: Restart Prowlarr
+  ansible.builtin.systemd:
+    name: prowlarr
+    state: restarted
+    daemon_reload: true
+  become: true

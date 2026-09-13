@@ -1,9 +1,0 @@
----
-- name: update dns host - system and technitium
-  hosts: dns
-  roles:
-    - system-update
-
-  tasks:
-    - name: update technitium dns
-      include_tasks: ../roles/technitium-dns/tasks/update.yml

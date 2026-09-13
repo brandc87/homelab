@@ -1,0 +1,8 @@
+---
+- name: Pull and apply qBittorrent stack updates
+  community.docker.docker_compose_v2:
+    project_src: "{{ qbittorrent_directory }}"
+    state: present
+    pull: always
+    remove_orphans: false
+  become: true

@@ -1,0 +1,5 @@
+---
+qbittorrent_directory: /opt/qbittorrent
+qbittorrent_uid: 1000
+qbittorrent_gid: 10000
+qbittorrent_webui_port: 8080

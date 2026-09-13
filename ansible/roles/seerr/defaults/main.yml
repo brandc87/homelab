@@ -1,0 +1,9 @@
+---
+seerr_version: "3.4.1"
+seerr_image: "ghcr.io/seerr-team/seerr:v{{ seerr_version }}"
+seerr_port: 5055
+seerr_timezone: Europe/London
+seerr_root: /opt/seerr
+seerr_config_directory: /opt/seerr/config
+seerr_container_uid: "1000"
+seerr_container_gid: "1000"

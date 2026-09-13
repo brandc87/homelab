@@ -1,0 +1,8 @@
+---
+- name: Pull and apply monitoring stack updates
+  community.docker.docker_compose_v2:
+    project_src: /opt/monitoring
+    state: present
+    pull: always
+    remove_orphans: false
+  become: true

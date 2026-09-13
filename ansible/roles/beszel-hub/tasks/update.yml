@@ -1,0 +1,4 @@
+---
+# Version changes are applied through the same idempotent, health-checked path.
+- name: Apply configured Beszel hub version
+  ansible.builtin.include_tasks: main.yml

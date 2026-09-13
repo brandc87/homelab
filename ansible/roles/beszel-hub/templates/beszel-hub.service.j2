@@ -1,0 +1,21 @@
+[Unit]
+Description=Beszel Hub
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ beszel_hub_user }}
+Group={{ beszel_hub_group }}
+WorkingDirectory={{ beszel_hub_data_directory }}
+ExecStart={{ beszel_hub_install_root }}/current/beszel serve --http 0.0.0.0:{{ beszel_hub_port }}
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ beszel_hub_data_directory }}
+
+[Install]
+WantedBy=multi-user.target

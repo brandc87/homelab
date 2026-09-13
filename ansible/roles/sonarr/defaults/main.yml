@@ -1,0 +1,6 @@
+---
+sonarr_version: "4.0.19.2979"
+sonarr_download_url: "https://github.com/Sonarr/Sonarr/releases/download/v{{ sonarr_version }}/Sonarr.main.{{ sonarr_version }}.linux-x64.tar.gz"
+sonarr_download_checksum: "sha256:b691b3584c31c0b5514058dee81071c923f63d59a37d19e32f92fa13eaa153db"
+sonarr_uid: 1000
+sonarr_gid: 10000

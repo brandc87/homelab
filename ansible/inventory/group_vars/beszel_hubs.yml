@@ -1,0 +1,6 @@
+---
+host_firewall_rules:
+  - port: "8090"
+    comment: Beszel hub
+
+beszel_hub_version: 0.18.7

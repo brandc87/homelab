@@ -1,58 +1,100 @@
 ---
-- name: install prerequisites
-  apt:
+- name: Validate Docker host platform
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+      - ansible_facts['architecture'] in docker_host_supported_architectures
+    fail_msg: >-
+      Unsupported Docker host platform: {{ ansible_facts['distribution'] }}
+      {{ ansible_facts['distribution_release'] }} on {{ ansible_facts['architecture'] }}.
+
+- name: Install Docker repository prerequisites
+  ansible.builtin.apt:
     name:
       - ca-certificates
-      - curl
-      - gnupg
+      - gpg
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
 
-- name: ensure keyrings directory exists
-  file:
+- name: Create APT keyring directory
+  ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
-    mode: '0755'
+    owner: root
+    group: root
+    mode: "0755"
   become: true
 
-- name: add docker gpg key
-  get_url:
-    url: https://download.docker.com/linux/debian/gpg
-    dest: /etc/apt/keyrings/docker.asc
-    mode: '0644'
+- name: Download Docker repository signing key
+  ansible.builtin.get_url:
+    url: "{{ docker_host_apt_key_url }}"
+    dest: "{{ docker_host_apt_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
   become: true
 
-- name: get dpkg architecture
-  command: dpkg --print-architecture
-  register: dpkg_arch
+- name: Read Docker signing-key fingerprint
+  ansible.builtin.command:
+    argv: [gpg, --show-keys, --with-colons, "{{ docker_host_apt_key_path }}"]
+  register: docker_host_apt_key_details
   changed_when: false
 
-- name: add docker repo
+- name: Verify Docker signing-key fingerprint
+  ansible.builtin.assert:
+    that:
+      - docker_host_apt_key_fingerprint in docker_host_apt_key_details.stdout
+    fail_msg: Docker repository signing-key fingerprint did not match.
+
+- name: Configure Docker repository
   ansible.builtin.deb822_repository:
     name: docker
-    types: deb
-    uris: https://download.docker.com/linux/debian
-    suites: "{{ ansible_distribution_release }}"
-    components: stable
-    signed_by: /etc/apt/keyrings/docker.asc
+    types: [deb]
+    uris: [https://download.docker.com/linux/debian]
+    suites: ["{{ ansible_facts['distribution_release'] }}"]
+    components: [stable]
+    architectures: ["{{ docker_host_architecture_map[ansible_facts['architecture']] }}"]
+    signed_by: "{{ docker_host_apt_key_path }}"
     state: present
   become: true
 
-- name: install docker
-  apt:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-compose-plugin
+- name: Install Docker Engine and Compose
+  ansible.builtin.apt:
+    name: "{{ docker_host_packages }}"
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
 
-- name: ensure docker is running
-  systemd:
+- name: Configure Docker daemon defaults
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+    content: "{{ docker_host_daemon_config | to_nice_json }}\n"
+  become: true
+  notify: Restart Docker
+
+- name: Enable and start Docker
+  ansible.builtin.systemd:
     name: docker
     state: started
-    enabled: yes
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Apply pending Docker daemon changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Docker Engine
+  ansible.builtin.command:
+    argv: [docker, info]
+  changed_when: false
+  become: true
+
+- name: Verify Docker Compose plugin
+  ansible.builtin.command:
+    argv: [docker, compose, version]
+  changed_when: false
   become: true

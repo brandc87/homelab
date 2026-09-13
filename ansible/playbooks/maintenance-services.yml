@@ -1,0 +1,78 @@
+---
+- name: Update Beszel hub services
+  hosts: beszel_hubs
+  serial: 1
+  tasks:
+    - name: Apply configured Beszel hub release
+      ansible.builtin.include_role:
+        name: beszel-hub
+        tasks_from: update.yml
+
+- name: Update Tautulli services
+  hosts: tautulli_servers
+  serial: 1
+  tasks:
+    - name: Apply configured Tautulli release
+      ansible.builtin.include_role:
+        name: tautulli
+        tasks_from: update.yml
+
+- name: Update native Sonarr services
+  hosts: sonarr_servers
+  serial: 1
+  roles:
+    - sonarr
+
+- name: Update native Prowlarr services
+  hosts: prowlarr_servers
+  serial: 1
+  roles:
+    - prowlarr
+
+- name: Update native Radarr services
+  hosts: radarr_servers
+  serial: 1
+  roles:
+    - radarr
+
+- name: Update Notifiarr clients
+  hosts: notifiarr_clients
+  serial: 1
+  roles:
+    - notifiarr
+
+- name: Update native SABnzbd services
+  hosts: sabnzbd_servers
+  serial: 1
+  roles:
+    - sabnzbd
+
+- name: Update Plex Media Server
+  hosts: media_servers
+  serial: 1
+  roles:
+    - plex
+
+- name: Update native Seerr services
+  hosts: seerr_servers
+  serial: 1
+  roles:
+    - seerr
+
+- name: Update downloader services
+  hosts: qbittorrent_servers
+  serial: 1
+  tasks:
+    - name: Update qBittorrent stack
+      ansible.builtin.include_role:
+        name: qbittorrent
+        tasks_from: update.yml
+
+- name: Update monitoring services
+  hosts: monitoring_hosts
+  serial: 1
+  tasks:
+    - name: Update monitoring stack
+      ansible.builtin.include_role:
+        name: monitoring-stack
+        tasks_from: update.yml

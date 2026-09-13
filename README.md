@@ -13,6 +13,35 @@ Homelab infrastructure, defined in code.
 
 </div>
 
+## Quick start
+
+Install the required Ansible collections, then converge the complete homelab:
+
+```bash
+cd ansible
+ansible-galaxy collection install -r requirements.yml
+ansible-playbook playbooks/site.yml
+```
+
+Converge only one host or inventory group with `--limit`:
+
+```bash
+ansible-playbook playbooks/site.yml --limit qbittorrent
+ansible-playbook playbooks/site.yml --limit arr
+```
+
+Routine operations use three entry points:
+
+```bash
+ansible-playbook playbooks/backup-services.yml
+ansible-playbook playbooks/maintenance.yml
+ansible-playbook playbooks/restore-services.yml --limit <host-or-group>
+```
+
+Use `playbooks/bootstrap.yml` when only the common operating-system baseline is
+needed. Proxmox maintenance remains intentionally separate in
+`playbooks/maintenance-proxmox.yml`.
+
 ---
 
 <div align="center">

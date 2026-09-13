@@ -1,0 +1,14 @@
+---
+host_firewall_rules:
+  - port: "5055"
+    comment: Seerr web interface
+
+seerr_version: "3.4.1"
+
+application_backup_name: seerr
+application_backup_service: seerr
+application_backup_paths:
+  - /etc/seerr
+  - /opt/seerr/config
+application_backup_restore_owner: "1000"
+application_backup_restore_group: "1000"

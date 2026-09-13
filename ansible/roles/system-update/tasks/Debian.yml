@@ -24,4 +24,6 @@
   reboot:
     msg: "Rebooting after apt upgrade"
   become: true
-  when: reboot_required.stat.exists
+  when:
+    - reboot_required.stat.exists
+    - system_update_reboot | bool

@@ -14,13 +14,13 @@
 - name: Create sonarr group
   group:
     name: sonarr
-    gid: 10000
+    gid: "{{ sonarr_gid }}"
   become: true
 
 - name: Create sonarr user
   user:
     name: sonarr
-    uid: 1000
+    uid: "{{ sonarr_uid }}"
     group: sonarr
     shell: /usr/sbin/nologin
     create_home: no
@@ -37,11 +37,20 @@
 
 - name: Download Sonarr release
   get_url:
-    url: "https://services.sonarr.tv/v1/download/main/latest?version=4&os=linux&arch=x64"
-    dest: /tmp/sonarr.tar.gz
+    url: "{{ sonarr_download_url }}"
+    dest: "/tmp/sonarr-{{ sonarr_version }}.tar.gz"
     mode: '0644'
+    checksum: "{{ sonarr_download_checksum }}"
   become: true
   register: sonarr_download
+
+- name: Stop Sonarr before replacing binaries
+  systemd:
+    name: sonarr
+    state: stopped
+  become: true
+  when: sonarr_download.changed
+  failed_when: false
 
 - name: Remove old install if updating
   file:
@@ -52,7 +61,7 @@
 
 - name: Extract Sonarr
   unarchive:
-    src: /tmp/sonarr.tar.gz
+    src: "/tmp/sonarr-{{ sonarr_version }}.tar.gz"
     dest: /opt
     remote_src: true
   become: true

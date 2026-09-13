@@ -49,6 +49,11 @@ variable "tags" {
   default = []
 }
 
+variable "nesting" {
+  type    = bool
+  default = true
+}
+
 variable "ssh_public_key" {
   type = string
 }
@@ -62,6 +67,15 @@ variable "mount_points" {
   type = list(object({
     volume = string
     path   = string
+  }))
+  default = []
+}
+
+variable "device_passthrough" {
+  type = list(object({
+    path = string
+    gid  = optional(number)
+    mode = optional(string, "0660")
   }))
   default = []
 }

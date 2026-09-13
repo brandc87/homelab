@@ -1,0 +1,173 @@
+---
+- name: Validate SABnzbd deployment inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+      - ansible_facts['architecture'] == 'x86_64'
+      - sabnzbd_version | length > 0
+      - sabnzbd_download_checksum is match('^sha256:[0-9a-f]{64}$')
+    fail_msg: Unsupported SABnzbd platform or invalid pinned release metadata.
+
+- name: Configure Debian non-free repository for UnRAR
+  ansible.builtin.deb822_repository:
+    name: debian-non-free
+    types: [deb]
+    uris: [https://deb.debian.org/debian]
+    suites:
+      - "{{ ansible_facts['distribution_release'] }}"
+      - "{{ ansible_facts['distribution_release'] }}-updates"
+    components: [non-free]
+    signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+    state: present
+  become: true
+
+- name: Install SABnzbd runtime and build dependencies
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - libffi-dev
+      - libssl-dev
+      - par2
+      - p7zip-full
+      - python3
+      - python3-dev
+      - python3-venv
+      - unrar
+      - unzip
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create shared media group
+  ansible.builtin.group:
+    name: "{{ sabnzbd_group }}"
+    gid: "{{ sabnzbd_gid }}"
+    system: true
+    state: present
+  become: true
+
+- name: Create SABnzbd service account
+  ansible.builtin.user:
+    name: "{{ sabnzbd_user }}"
+    uid: "{{ sabnzbd_uid }}"
+    group: "{{ sabnzbd_group }}"
+    home: "{{ sabnzbd_data_directory }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+    system: true
+    state: present
+  become: true
+
+- name: Create SABnzbd data directory
+  ansible.builtin.file:
+    path: "{{ sabnzbd_data_directory }}"
+    state: directory
+    owner: "{{ sabnzbd_user }}"
+    group: "{{ sabnzbd_group }}"
+    mode: "0775"
+  become: true
+
+- name: Download pinned SABnzbd source release
+  ansible.builtin.get_url:
+    url: "{{ sabnzbd_download_url }}"
+    dest: "{{ sabnzbd_archive }}"
+    owner: root
+    group: root
+    mode: "0644"
+    checksum: "{{ sabnzbd_download_checksum }}"
+  become: true
+
+- name: Extract pinned SABnzbd source release
+  ansible.builtin.unarchive:
+    src: "{{ sabnzbd_archive }}"
+    dest: /opt
+    remote_src: true
+    creates: "{{ sabnzbd_release_directory }}/SABnzbd.py"
+  become: true
+  register: sabnzbd_extract
+
+- name: Create SABnzbd virtual environment
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -m
+      - venv
+      - "{{ sabnzbd_release_directory }}/venv"
+    creates: "{{ sabnzbd_release_directory }}/venv/bin/python"
+  become: true
+
+- name: Install pinned SABnzbd Python dependencies
+  ansible.builtin.command:
+    argv:
+      - "{{ sabnzbd_release_directory }}/venv/bin/pip"
+      - install
+      - --requirement
+      - "{{ sabnzbd_release_directory }}/requirements.txt"
+    creates: "{{ sabnzbd_release_directory }}/venv/.requirements-installed"
+  become: true
+  register: sabnzbd_dependencies
+
+- name: Record installed SABnzbd dependencies
+  ansible.builtin.file:
+    path: "{{ sabnzbd_release_directory }}/venv/.requirements-installed"
+    state: touch
+    owner: root
+    group: root
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+  become: true
+  when: sabnzbd_dependencies.changed
+
+- name: Set SABnzbd release ownership
+  ansible.builtin.file:
+    path: "{{ sabnzbd_release_directory }}"
+    owner: root
+    group: "{{ sabnzbd_group }}"
+    mode: "u=rwX,g=rX,o=rX"
+    recurse: true
+  become: true
+
+- name: Point active SABnzbd installation at pinned release
+  ansible.builtin.file:
+    src: "{{ sabnzbd_release_directory }}"
+    dest: "{{ sabnzbd_install_link }}"
+    state: link
+    owner: root
+    group: "{{ sabnzbd_group }}"
+  become: true
+  notify: Restart SABnzbd
+
+- name: Install SABnzbd systemd service
+  ansible.builtin.template:
+    src: sabnzbd.service.j2
+    dest: /etc/systemd/system/sabnzbd.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart SABnzbd
+
+- name: Enable and start SABnzbd
+  ansible.builtin.systemd:
+    name: sabnzbd
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Apply pending SABnzbd restart before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify SABnzbd responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ sabnzbd_port }}/"
+    status_code:
+      - 200
+      - 302
+      - 401
+    return_content: false
+  register: sabnzbd_health
+  retries: 20
+  delay: 3
+  until: sabnzbd_health is succeeded

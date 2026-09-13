@@ -1,6 +1,17 @@
 ---
-- name: Baseline configuration for all hosts
-  hosts: all
-  roles:
-    - bootstrap
-    - system-update
+# Full convergence entry point. Use --limit to converge a host or group.
+- import_playbook: bootstrap.yml
+- import_playbook: tailscale.yml
+- import_playbook: technitium.yml
+- import_playbook: beszel-hub.yml
+- import_playbook: monitoring.yml
+- import_playbook: radarr.yml
+- import_playbook: sonarr.yml
+- import_playbook: prowlarr.yml
+- import_playbook: notifiarr.yml
+- import_playbook: seerr.yml
+- import_playbook: tautulli.yml
+- import_playbook: sabnzbd.yml
+- import_playbook: qbittorrent.yml
+- import_playbook: plex.yml
+- import_playbook: beszel-agent.yml

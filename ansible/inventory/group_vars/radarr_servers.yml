@@ -1,0 +1,13 @@
+---
+host_firewall_rules:
+  - port: "7878"
+    comment: Radarr web interface
+
+radarr_version: "6.3.0.10514"
+
+application_backup_name: radarr
+application_backup_service: radarr
+application_backup_paths:
+  - /var/lib/radarr
+application_backup_restore_owner: radarr
+application_backup_restore_group: radarr

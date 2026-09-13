@@ -20,6 +20,11 @@
   template:
     src: pve-exporter.yml.j2
     dest: /opt/monitoring/pve-exporter.yml
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
   become: true
 
 - name: deploy kromgo config
@@ -32,6 +37,11 @@
   template:
     src: docker-compose.yml.j2
     dest: /opt/monitoring/docker-compose.yml
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
   become: true
 
 - name: bring up the stack

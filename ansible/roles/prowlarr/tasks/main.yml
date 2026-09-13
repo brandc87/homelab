@@ -1,0 +1,112 @@
+---
+- name: Install Prowlarr prerequisites
+  ansible.builtin.apt:
+    name:
+      - curl
+      - sqlite3
+      - tar
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create Prowlarr group
+  ansible.builtin.group:
+    name: "{{ prowlarr_group }}"
+    gid: "{{ prowlarr_gid }}"
+    system: true
+    state: present
+  become: true
+
+- name: Create Prowlarr user
+  ansible.builtin.user:
+    name: "{{ prowlarr_user }}"
+    uid: "{{ prowlarr_uid }}"
+    group: "{{ prowlarr_group }}"
+    home: "{{ prowlarr_data_directory }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+    system: true
+    state: present
+  become: true
+
+- name: Create Prowlarr data directory
+  ansible.builtin.file:
+    path: "{{ prowlarr_data_directory }}"
+    state: directory
+    owner: "{{ prowlarr_user }}"
+    group: "{{ prowlarr_group }}"
+    mode: "0775"
+  become: true
+
+- name: Download pinned Prowlarr release
+  ansible.builtin.get_url:
+    url: "{{ prowlarr_download_url }}"
+    dest: "/tmp/prowlarr-{{ prowlarr_version }}.tar.gz"
+    mode: "0644"
+  register: prowlarr_download
+  become: true
+
+- name: Stop Prowlarr before replacing binaries
+  ansible.builtin.systemd:
+    name: prowlarr
+    state: stopped
+  when: prowlarr_download.changed
+  failed_when: false
+  become: true
+
+- name: Remove previous Prowlarr installation
+  ansible.builtin.file:
+    path: "{{ prowlarr_install_directory }}"
+    state: absent
+  when: prowlarr_download.changed
+  become: true
+
+- name: Extract Prowlarr release
+  ansible.builtin.unarchive:
+    src: "/tmp/prowlarr-{{ prowlarr_version }}.tar.gz"
+    dest: /opt
+    remote_src: true
+  when: prowlarr_download.changed
+  become: true
+
+- name: Set Prowlarr installation ownership
+  ansible.builtin.file:
+    path: "{{ prowlarr_install_directory }}"
+    owner: root
+    group: "{{ prowlarr_group }}"
+    mode: "0755"
+    recurse: true
+  become: true
+
+- name: Install Prowlarr systemd unit
+  ansible.builtin.template:
+    src: prowlarr.service.j2
+    dest: /etc/systemd/system/prowlarr.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Prowlarr
+  become: true
+
+- name: Enable and start Prowlarr
+  ansible.builtin.systemd:
+    name: prowlarr
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Flush handlers before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Prowlarr responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ prowlarr_port }}/"
+    status_code:
+      - 200
+      - 302
+    return_content: false
+  register: prowlarr_health
+  retries: 10
+  delay: 3
+  until: prowlarr_health is succeeded

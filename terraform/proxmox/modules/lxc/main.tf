@@ -16,6 +16,13 @@ resource "proxmox_virtual_environment_container" "this" {
   unprivileged = true
   tags         = var.tags
 
+  lifecycle {
+    ignore_changes = [
+      initialization[0].user_account,
+      operating_system[0].template_file_id,
+    ]
+  }
+
   initialization {
     hostname = var.hostname
 
@@ -57,7 +64,7 @@ resource "proxmox_virtual_environment_container" "this" {
   }
 
   features {
-    nesting = true
+    nesting = var.nesting
   }
 
   dynamic "mount_point" {
@@ -65,6 +72,15 @@ resource "proxmox_virtual_environment_container" "this" {
     content {
       volume = mount_point.value.volume
       path   = mount_point.value.path
+    }
+  }
+
+  dynamic "device_passthrough" {
+    for_each = var.device_passthrough
+    content {
+      path = device_passthrough.value.path
+      gid  = device_passthrough.value.gid
+      mode = device_passthrough.value.mode
     }
   }
 }

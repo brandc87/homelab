@@ -1,0 +1,12 @@
+---
+plex_version: "1.43.3.10896-cb3ebc72d"
+plex_port: 32400
+plex_user: plex
+plex_group: plex
+plex_media_group: media
+plex_media_gid: 10000
+plex_transcode_directory: /mnt/temp
+plex_apt_key_url: https://downloads.plex.tv/plex-keys/PlexSign.v2.key
+plex_apt_key_download_path: /etc/apt/keyrings/plexmediaserver.v2.asc
+plex_apt_key_path: /etc/apt/keyrings/plexmediaserver.v2.gpg
+plex_apt_key_fingerprint: 6EFFEB478A6559D75C7C4FE706C521790B9CFFDE

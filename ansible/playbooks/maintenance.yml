@@ -1,0 +1,6 @@
+---
+# Full routine maintenance. Proxmox is intentionally excluded; run
+# maintenance-proxmox.yml separately after reviewing its pending upgrades.
+- import_playbook: maintenance-dns.yml
+- import_playbook: maintenance-lxcs.yml
+- import_playbook: maintenance-services.yml

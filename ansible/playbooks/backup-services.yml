@@ -1,0 +1,8 @@
+---
+- name: Back up application state
+  hosts: backup_services
+  serial: 1
+  roles:
+    - role: application-backup
+      vars:
+        application_backup_action: backup

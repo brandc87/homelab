@@ -1,0 +1,14 @@
+services:
+  seerr:
+    image: "{{ seerr_image }}"
+    container_name: seerr
+    init: true
+    environment:
+      LOG_LEVEL: info
+      TZ: "{{ seerr_timezone }}"
+      PORT: "{{ seerr_port }}"
+    ports:
+      - "{{ seerr_port }}:{{ seerr_port }}"
+    volumes:
+      - "{{ seerr_config_directory }}:/app/config"
+    restart: unless-stopped

@@ -1,0 +1,16 @@
+---
+tautulli_version: "2.17.2"
+tautulli_port: 8181
+tautulli_user: tautulli
+tautulli_group: tautulli
+tautulli_install_root: /opt/tautulli
+tautulli_config_directory: /etc/tautulli
+tautulli_data_directory: /var/lib/tautulli
+
+# JBOPS kill_stream.py is installed for use by a Tautulli script notification
+# agent. Keep the immutable upstream revision and checksum together when
+# updating it.
+tautulli_kill_stream_enabled: true
+tautulli_kill_stream_revision: "76a0636a34797ad1a10b230a6827eb1b395cf508"
+tautulli_kill_stream_checksum: "sha256:22bd9b799c05632e89663b3004c5a3220ae391f88684d488eb2f2022d0cdb8d2"
+tautulli_scripts_directory: /opt/tautulli-scripts

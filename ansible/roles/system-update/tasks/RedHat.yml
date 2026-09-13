@@ -22,4 +22,6 @@
   reboot:
     msg: "Rebooting after dnf upgrade"
   become: true
-  when: needs_restart.rc == 1
+  when:
+    - needs_restart.rc == 1
+    - system_update_reboot | bool

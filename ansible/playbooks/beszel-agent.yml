@@ -1,5 +1,12 @@
 ---
 - name: Install beszel agent
-  hosts: dns
+  hosts: beszel_agents:!beszel_agent_excluded
+  pre_tasks:
+    - name: Resolve Beszel credentials once
+      ansible.builtin.set_fact:
+        beszel_runtime_hub_key: "{{ lookup('community.general.onepassword', 'beszel-hub-key', vault='Homelab', field='credential') }}"
+        beszel_runtime_universal_token: "{{ lookup('community.general.onepassword', 'beszel-universal-token', vault='Homelab', field='credential') }}"
+      run_once: true
+      no_log: true
   roles:
     - beszel-agent

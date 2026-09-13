@@ -1,0 +1,22 @@
+[Unit]
+Description=Prowlarr indexer manager
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ prowlarr_user }}
+Group={{ prowlarr_group }}
+UMask=0002
+ExecStart={{ prowlarr_install_directory }}/Prowlarr -nobrowser -data={{ prowlarr_data_directory }}
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ prowlarr_data_directory }}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,48 @@
+---
+- name: Update secondary DNS nodes
+  hosts: dns_secondary
+  serial: 1
+  roles:
+    - system-update
+  tasks:
+    - name: Update Technitium DNS
+      ansible.builtin.include_role:
+        name: technitium-dns
+        tasks_from: update.yml
+
+    - name: Verify secondary DNS is listening
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: "{{ technitium_health_port }}"
+        timeout: 60
+      delegate_to: localhost
+      become: false
+
+    - name: Verify secondary DNS resolves queries
+      ansible.builtin.include_role:
+        name: technitium-dns
+        tasks_from: health.yml
+
+- name: Update primary DNS nodes
+  hosts: dns_primary
+  serial: 1
+  roles:
+    - system-update
+  tasks:
+    - name: Update Technitium DNS
+      ansible.builtin.include_role:
+        name: technitium-dns
+        tasks_from: update.yml
+
+    - name: Verify primary DNS is listening
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: "{{ technitium_health_port }}"
+        timeout: 60
+      delegate_to: localhost
+      become: false
+
+    - name: Verify primary DNS resolves queries
+      ansible.builtin.include_role:
+        name: technitium-dns
+        tasks_from: health.yml

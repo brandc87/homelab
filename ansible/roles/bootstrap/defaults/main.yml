@@ -3,3 +3,9 @@ bootstrap_timezone: "Europe/London"
 bootstrap_disable_password_auth: true
 bootstrap_install_fail2ban: true
 bootstrap_install_unattended_upgrades: true
+host_firewall_enabled: true
+host_firewall_ssh_port: 22
+host_firewall_ssh_sources: []
+host_firewall_default_routed_policy: deny
+host_firewall_common_rules: []
+host_firewall_rules: []

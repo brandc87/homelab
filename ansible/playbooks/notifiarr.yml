@@ -1,0 +1,6 @@
+---
+- name: Deploy Notifiarr clients
+  hosts: notifiarr_clients
+  serial: 1
+  roles:
+    - notifiarr

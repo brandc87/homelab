@@ -1,0 +1,20 @@
+[Unit]
+Description=Tautulli - Plex monitoring and analytics
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ tautulli_user }}
+Group={{ tautulli_group }}
+ExecStart=/usr/bin/python3 {{ tautulli_install_root }}/current/Tautulli.py --config {{ tautulli_config_directory }}/config.ini --datadir {{ tautulli_data_directory }} --quiet --nolaunch
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ tautulli_config_directory }} {{ tautulli_data_directory }}
+
+[Install]
+WantedBy=multi-user.target

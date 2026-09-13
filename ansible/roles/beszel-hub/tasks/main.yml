@@ -1,0 +1,100 @@
+---
+- name: Resolve Beszel release architecture
+  ansible.builtin.set_fact:
+    beszel_hub_release_arch: "{{ beszel_hub_architectures.get(ansible_facts['architecture']) }}"
+
+- name: Verify Beszel supports this architecture
+  ansible.builtin.assert:
+    that:
+      - beszel_hub_release_arch is not none
+    fail_msg: "Unsupported Beszel architecture: {{ ansible_facts['architecture'] }}"
+
+- name: Create Beszel group
+  ansible.builtin.group:
+    name: "{{ beszel_hub_group }}"
+    system: true
+    state: present
+  become: true
+
+- name: Create Beszel user
+  ansible.builtin.user:
+    name: "{{ beszel_hub_user }}"
+    group: "{{ beszel_hub_group }}"
+    system: true
+    home: "{{ beszel_hub_data_directory }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+    state: present
+  become: true
+
+- name: Create Beszel directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ beszel_hub_data_directory }}"
+      owner: "{{ beszel_hub_user }}"
+      group: "{{ beszel_hub_group }}"
+      mode: "0750"
+    - path: "{{ beszel_hub_install_root }}/versions/{{ beszel_hub_version }}"
+      owner: root
+      group: root
+      mode: "0755"
+  become: true
+
+- name: Download Beszel hub release
+  ansible.builtin.get_url:
+    url: "https://github.com/henrygd/beszel/releases/download/v{{ beszel_hub_version }}/beszel_linux_{{ beszel_hub_release_arch }}.tar.gz"
+    dest: "/tmp/beszel-hub-{{ beszel_hub_version }}.tar.gz"
+    mode: "0644"
+  become: true
+
+- name: Extract Beszel hub release
+  ansible.builtin.unarchive:
+    src: "/tmp/beszel-hub-{{ beszel_hub_version }}.tar.gz"
+    dest: "{{ beszel_hub_install_root }}/versions/{{ beszel_hub_version }}"
+    remote_src: true
+    creates: "{{ beszel_hub_install_root }}/versions/{{ beszel_hub_version }}/beszel"
+  become: true
+
+- name: Activate requested Beszel version
+  ansible.builtin.file:
+    src: "{{ beszel_hub_install_root }}/versions/{{ beszel_hub_version }}"
+    dest: "{{ beszel_hub_install_root }}/current"
+    state: link
+    force: true
+  become: true
+  notify: Restart Beszel hub
+
+- name: Install Beszel systemd unit
+  ansible.builtin.template:
+    src: beszel-hub.service.j2
+    dest: /etc/systemd/system/beszel-hub.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart Beszel hub
+
+- name: Enable and start Beszel hub
+  ansible.builtin.systemd:
+    name: beszel-hub
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Flush handlers before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Beszel hub responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ beszel_hub_port }}/"
+    status_code: 200
+  register: beszel_hub_health
+  retries: 10
+  delay: 3
+  until: beszel_hub_health is succeeded

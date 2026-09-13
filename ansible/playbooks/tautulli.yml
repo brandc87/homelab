@@ -1,0 +1,5 @@
+---
+- name: Deploy Tautulli
+  hosts: tautulli_servers
+  roles:
+    - tautulli

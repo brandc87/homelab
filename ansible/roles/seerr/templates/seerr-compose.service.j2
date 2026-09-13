@@ -1,0 +1,18 @@
+[Unit]
+Description=Seerr Compose application
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory={{ seerr_root }}
+ExecStart=/usr/bin/docker compose -f {{ seerr_root }}/compose.yml up --detach --remove-orphans
+ExecReload=/usr/bin/docker compose -f {{ seerr_root }}/compose.yml up --detach --remove-orphans
+ExecStop=/usr/bin/docker compose -f {{ seerr_root }}/compose.yml down
+TimeoutStartSec=0
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

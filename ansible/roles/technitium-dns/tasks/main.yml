@@ -7,13 +7,23 @@
 - name: install prerequisites
   apt:
     name:
+      - dnsutils
       - gzip
       - tar
     state: present
   become: true
 
-- name: run technitium dns install script
-  shell: curl -sSL https://download.technitium.com/dns/install.sh | bash
+- name: Download Technitium DNS installer
+  ansible.builtin.get_url:
+    url: https://download.technitium.com/dns/install.sh
+    dest: /tmp/technitium-dns-install.sh
+    mode: "0755"
+
+- name: Run Technitium DNS installer
+  ansible.builtin.command:
+    argv:
+      - /bin/bash
+      - /tmp/technitium-dns-install.sh
   args:
     creates: /etc/dns
   become: true

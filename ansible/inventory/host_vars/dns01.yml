@@ -1,2 +1,4 @@
 ---
-tailscale_advertise_routes: "10.15.30.0/24,10.15.40.0/24"
+technitium_cluster_role: primary
+host_firewall_default_routed_policy: allow
+tailscale_advertise_routes: "10.15.1.10/32,10.15.30.0/24,10.15.40.0/24"

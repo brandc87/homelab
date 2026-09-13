@@ -1,0 +1,11 @@
+---
+host_firewall_rules:
+  - port: "8989"
+    comment: Sonarr web interface
+
+application_backup_name: sonarr
+application_backup_service: sonarr
+application_backup_paths:
+  - /var/lib/sonarr
+application_backup_restore_owner: sonarr
+application_backup_restore_group: sonarr

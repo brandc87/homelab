@@ -1,2 +1,3 @@
 ---
+host_firewall_enabled: false
 tailscale_advertise_routes: ""

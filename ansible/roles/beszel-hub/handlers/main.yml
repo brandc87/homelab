@@ -1,0 +1,7 @@
+---
+- name: Restart Beszel hub
+  ansible.builtin.systemd:
+    name: beszel-hub
+    state: restarted
+    daemon_reload: true
+  become: true

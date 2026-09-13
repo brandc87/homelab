@@ -1,0 +1,6 @@
+---
+notifiarr_version: "0.9.5-3144"
+notifiarr_port: 5454
+notifiarr_apt_key_url: https://packagecloud.io/golift/pkgs/gpgkey
+notifiarr_apt_key_fingerprint: "552A075A7B63AC7A6116E93708653AE3B7E40B70"
+notifiarr_apt_key_path: /etc/apt/keyrings/notifiarr.asc

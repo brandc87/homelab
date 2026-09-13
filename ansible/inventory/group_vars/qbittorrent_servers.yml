@@ -1,0 +1,19 @@
+---
+protonvpn_wireguard_key: "{{ lookup('community.general.onepassword', 'protonvpn-wireguard-key', vault='Homelab', field='credential') }}"
+
+host_firewall_rules:
+  - port: "8080"
+    comment: qBittorrent web interface
+
+qbittorrent_directory: /opt/qbittorrent
+qbittorrent_uid: 1000
+qbittorrent_gid: 10000
+qbittorrent_webui_port: 8080
+
+application_backup_name: qbittorrent
+application_backup_service: qbittorrent-stack
+application_backup_paths:
+  - /opt/qbittorrent/config
+  - /opt/qbittorrent/gluetun
+application_backup_restore_owner: "1000"
+application_backup_restore_group: "10000"

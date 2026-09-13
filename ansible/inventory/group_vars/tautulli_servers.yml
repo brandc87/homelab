@@ -1,0 +1,27 @@
+---
+host_firewall_rules:
+  - port: "8181"
+    comment: Tautulli web interface
+
+tautulli_version: "2.17.2"
+
+application_backup_name: tautulli
+application_backup_service: tautulli
+application_backup_paths:
+  - /etc/tautulli
+  - /var/lib/tautulli
+application_backup_restore_owner: tautulli
+application_backup_restore_group: tautulli
+application_backup_restore_replacements:
+  - path: /etc/tautulli/config.ini
+    regexp: /opt/Tautulli/backups
+    replace: /var/lib/tautulli/backups
+  - path: /etc/tautulli/config.ini
+    regexp: /opt/Tautulli/cache
+    replace: /var/lib/tautulli/cache
+  - path: /etc/tautulli/config.ini
+    regexp: /opt/Tautulli/exports
+    replace: /var/lib/tautulli/exports
+  - path: /etc/tautulli/config.ini
+    regexp: /opt/Tautulli/newsletters
+    replace: /var/lib/tautulli/newsletters

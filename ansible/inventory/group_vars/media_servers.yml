@@ -1,0 +1,38 @@
+---
+host_firewall_rules:
+  - port: "32400"
+    from_ip: 0.0.0.0/0
+    comment: Plex web and remote access
+  - port: "8324"
+    comment: Plex companion
+  - port: "32469"
+    comment: Plex DLNA
+  - port: "1900"
+    proto: udp
+    comment: Plex DLNA discovery
+  - port: "5353"
+    proto: udp
+    comment: Plex discovery
+  - port: "32410"
+    proto: udp
+    comment: Plex discovery
+  - port: "32412:32414"
+    proto: udp
+    comment: Plex discovery
+
+plex_version: "1.43.3.10896-cb3ebc72d"
+
+application_backup_name: plex
+application_backup_service: plexmediaserver
+application_backup_paths:
+  - /var/lib/plexmediaserver
+application_backup_exclude_paths:
+  - /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Cache
+  - /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Codecs
+  - /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Crash Reports
+  - /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Diagnostics
+  - /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Drivers
+  - /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs
+  - /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Updates
+application_backup_restore_owner: plex
+application_backup_restore_group: plex

@@ -1,0 +1,5 @@
+---
+- name: Deploy Beszel hub
+  hosts: beszel_hubs
+  roles:
+    - beszel-hub

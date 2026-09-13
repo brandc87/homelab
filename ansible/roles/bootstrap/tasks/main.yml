@@ -56,14 +56,18 @@
     name: unattended-upgrades
     state: present
   become: true
-  when: bootstrap_install_unattended_upgrades
+  when:
+    - bootstrap_install_unattended_upgrades
+    - ansible_facts['os_family'] == "Debian"
 
 - name: Configure unattended-upgrades (security only, no auto-reboot)
   template:
     src: 50unattended-upgrades.j2
     dest: /etc/apt/apt.conf.d/50unattended-upgrades
   become: true
-  when: bootstrap_install_unattended_upgrades
+  when:
+    - bootstrap_install_unattended_upgrades
+    - ansible_facts['os_family'] == "Debian"
 
 - name: Enable the periodic update/upgrade timer
   copy:
@@ -72,4 +76,80 @@
       APT::Periodic::Update-Package-Lists "1";
       APT::Periodic::Unattended-Upgrade "1";
   become: true
-  when: bootstrap_install_unattended_upgrades
+  when:
+    - bootstrap_install_unattended_upgrades
+    - ansible_facts['os_family'] == "Debian"
+
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  become: true
+  when:
+    - host_firewall_enabled | bool
+    - ansible_facts['os_family'] == "Debian"
+
+- name: Allow SSH from trusted networks before enabling UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ host_firewall_ssh_port }}"
+    proto: tcp
+    from_ip: "{{ item }}"
+    comment: Ansible SSH
+  loop: "{{ host_firewall_ssh_sources }}"
+  become: true
+  when:
+    - host_firewall_enabled | bool
+    - ansible_facts['os_family'] == "Debian"
+
+- name: Allow declared service traffic before enabling UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto | default('tcp') }}"
+    from_ip: "{{ item.from_ip | default(host_firewall_internal_network) }}"
+    comment: "{{ item.comment | default('Managed by Ansible') }}"
+  loop: "{{ host_firewall_common_rules + host_firewall_rules }}"
+  loop_control:
+    label: "{{ item.proto | default('tcp') }}/{{ item.port }} from {{ item.from_ip | default(host_firewall_internal_network) }}"
+  become: true
+  when:
+    - host_firewall_enabled | bool
+    - ansible_facts['os_family'] == "Debian"
+
+- name: Set UFW incoming policy
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  become: true
+  when:
+    - host_firewall_enabled | bool
+    - ansible_facts['os_family'] == "Debian"
+
+- name: Set UFW outgoing policy
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  become: true
+  when:
+    - host_firewall_enabled | bool
+    - ansible_facts['os_family'] == "Debian"
+
+- name: Set UFW routed traffic policy
+  community.general.ufw:
+    direction: routed
+    policy: "{{ host_firewall_default_routed_policy }}"
+  become: true
+  when:
+    - host_firewall_enabled | bool
+    - ansible_facts['os_family'] == "Debian"
+
+- name: Enable UFW with low-volume logging
+  community.general.ufw:
+    state: enabled
+    logging: low
+  become: true
+  when:
+    - host_firewall_enabled | bool
+    - ansible_facts['os_family'] == "Debian"

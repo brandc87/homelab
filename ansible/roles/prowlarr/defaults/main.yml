@@ -1,0 +1,10 @@
+---
+prowlarr_version: "2.4.0.5397"
+prowlarr_download_url: "https://github.com/Prowlarr/Prowlarr/releases/download/v{{ prowlarr_version }}/Prowlarr.master.{{ prowlarr_version }}.linux-core-x64.tar.gz"
+prowlarr_user: prowlarr
+prowlarr_group: prowlarr
+prowlarr_uid: 1000
+prowlarr_gid: 10000
+prowlarr_data_directory: /var/lib/prowlarr
+prowlarr_install_directory: /opt/Prowlarr
+prowlarr_port: 9696

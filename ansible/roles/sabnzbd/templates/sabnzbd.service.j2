@@ -1,0 +1,22 @@
+[Unit]
+Description=SABnzbd
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ sabnzbd_user }}
+Group={{ sabnzbd_group }}
+UMask=0002
+WorkingDirectory={{ sabnzbd_install_link }}
+ExecStart={{ sabnzbd_install_link }}/venv/bin/python {{ sabnzbd_install_link }}/SABnzbd.py --config-file {{ sabnzbd_data_directory }}/sabnzbd.ini --server 0.0.0.0:{{ sabnzbd_port }}
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ sabnzbd_data_directory }} /mnt/media_root /mnt/fast_media_root
+
+[Install]
+WantedBy=multi-user.target

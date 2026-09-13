@@ -1,0 +1,12 @@
+---
+application_backup_action: backup
+application_backup_name: "{{ inventory_hostname }}"
+application_backup_service: ""
+application_backup_paths: []
+application_backup_exclude_paths: []
+application_backup_remote_archive: "/var/tmp/{{ application_backup_name }}-backup.tar.gz"
+application_backup_local_root: "{{ playbook_dir }}/../backups"
+application_backup_local_archive: "{{ application_backup_local_root }}/{{ inventory_hostname }}/{{ application_backup_name }}-latest.tar.gz"
+application_backup_restore_owner: ""
+application_backup_restore_group: ""
+application_backup_restore_replacements: []

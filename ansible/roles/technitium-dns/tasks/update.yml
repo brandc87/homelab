@@ -1,9 +1,27 @@
 ---
-- name: re-run Technitium install script to update
-  shell: curl -sSL https://download.technitium.com/dns/install.sh | bash
+- name: Download Technitium installer
+  ansible.builtin.get_url:
+    url: https://download.technitium.com/dns/install.sh
+    dest: /tmp/technitium-dns-install.sh
+    mode: "0755"
+  become: true
+
+- name: Run Technitium installer to update
+  ansible.builtin.command:
+    argv:
+      - /bin/bash
+      - /tmp/technitium-dns-install.sh
   become: true
   register: technitium_update
+  changed_when: true
 
-- name: show update output
-  debug:
+- name: Ensure Technitium DNS is running
+  ansible.builtin.systemd:
+    name: dns
+    state: started
+    enabled: true
+  become: true
+
+- name: Show update output
+  ansible.builtin.debug:
     var: technitium_update.stdout_lines

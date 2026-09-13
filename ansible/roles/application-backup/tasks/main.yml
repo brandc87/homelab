@@ -1,0 +1,133 @@
+---
+- name: Validate application backup configuration
+  ansible.builtin.assert:
+    that:
+      - application_backup_action in ['backup', 'restore']
+      - application_backup_service | length > 0
+      - application_backup_paths | length > 0
+      - application_backup_paths | select('match', '^/') | list | length == application_backup_paths | length
+      - application_backup_action != 'restore' or application_backup_restore_owner | length > 0
+      - application_backup_action != 'restore' or application_backup_restore_group | length > 0
+    fail_msg: Application backup requires a service and a list of absolute paths.
+
+- name: Check local restore archive
+  ansible.builtin.stat:
+    path: "{{ application_backup_local_archive }}"
+  delegate_to: localhost
+  become: false
+  register: application_backup_local_file
+  when: application_backup_action == 'restore'
+
+- name: Require an existing restore archive
+  ansible.builtin.assert:
+    that: application_backup_local_file.stat.exists
+    fail_msg: "Restore archive not found: {{ application_backup_local_archive }}"
+  when: application_backup_action == 'restore'
+
+- name: Perform consistent application backup or restore
+  block:
+    - name: Stop application for a consistent backup or restore
+      ansible.builtin.systemd:
+        name: "{{ application_backup_service }}"
+        state: stopped
+      become: true
+
+    - name: Back up application data
+      when: application_backup_action == 'backup'
+      block:
+        - name: Create application archive on managed host
+          ansible.builtin.command:
+            argv: >-
+              {{
+                ['tar', '--create', '--gzip', '--file', application_backup_remote_archive, '--directory', '/']
+                + (application_backup_exclude_paths
+                   | map('regex_replace', '^/', '')
+                   | map('regex_replace', '^(.*)$', '--exclude=\\1')
+                   | list)
+                + (application_backup_paths | map('regex_replace', '^/', '') | list)
+              }}
+          become: true
+          changed_when: true
+
+        - name: Create local host backup directory
+          ansible.builtin.file:
+            path: "{{ application_backup_local_archive | dirname }}"
+            state: directory
+            mode: "0700"
+          delegate_to: localhost
+          become: false
+
+        - name: Fetch application archive to controller
+          ansible.builtin.fetch:
+            src: "{{ application_backup_remote_archive }}"
+            dest: "{{ application_backup_local_archive }}"
+            flat: true
+            validate_checksum: true
+          become: true
+
+        - name: Restrict local application archive permissions
+          ansible.builtin.file:
+            path: "{{ application_backup_local_archive }}"
+            mode: "0600"
+          delegate_to: localhost
+          become: false
+
+    - name: Restore application data
+      when: application_backup_action == 'restore'
+      block:
+        - name: Copy application archive to managed host
+          ansible.builtin.copy:
+            src: "{{ application_backup_local_archive }}"
+            dest: "{{ application_backup_remote_archive }}"
+            owner: root
+            group: root
+            mode: "0600"
+          become: true
+
+        - name: Restore application archive
+          ansible.builtin.command:
+            argv:
+              - tar
+              - --extract
+              - --gzip
+              - --file
+              - "{{ application_backup_remote_archive }}"
+              - --directory
+              - /
+              - --no-same-owner
+          become: true
+          changed_when: true
+
+        - name: Set restored application data ownership
+          ansible.builtin.file:
+            path: "{{ item }}"
+            owner: "{{ application_backup_restore_owner }}"
+            group: "{{ application_backup_restore_group }}"
+            recurse: true
+          loop: "{{ application_backup_paths }}"
+          when:
+            - application_backup_restore_owner | length > 0
+            - application_backup_restore_group | length > 0
+          become: true
+
+        - name: Normalize restored application paths
+          ansible.builtin.replace:
+            path: "{{ item.path }}"
+            regexp: "{{ item.regexp }}"
+            replace: "{{ item.replace }}"
+          loop: "{{ application_backup_restore_replacements }}"
+          loop_control:
+            label: "{{ item.path }}: {{ item.regexp }}"
+          become: true
+  always:
+    - name: Remove temporary archive from managed host
+      ansible.builtin.file:
+        path: "{{ application_backup_remote_archive }}"
+        state: absent
+      become: true
+
+    - name: Start application after backup or restore
+      ansible.builtin.systemd:
+        name: "{{ application_backup_service }}"
+        state: started
+      become: true

@@ -1,0 +1,13 @@
+---
+sabnzbd_version: "5.1.1"
+sabnzbd_download_url: "https://github.com/sabnzbd/sabnzbd/releases/download/{{ sabnzbd_version }}/SABnzbd-{{ sabnzbd_version }}-src.tar.gz"
+sabnzbd_download_checksum: "sha256:134fa126635c6cc154737fd4ce058fcd52af00fb59347f573064513f12370412"
+sabnzbd_archive: "/var/tmp/SABnzbd-{{ sabnzbd_version }}-src.tar.gz"
+sabnzbd_release_directory: "/opt/SABnzbd-{{ sabnzbd_version }}"
+sabnzbd_install_link: /opt/sabnzbd
+sabnzbd_data_directory: /var/lib/sabnzbd
+sabnzbd_user: sabnzbd
+sabnzbd_group: media
+sabnzbd_uid: 1000
+sabnzbd_gid: 10000
+sabnzbd_port: 7777

@@ -1,0 +1,13 @@
+---
+host_firewall_rules:
+  - port: "5454"
+    comment: Notifiarr client web interface
+
+notifiarr_version: "0.9.5-3144"
+
+application_backup_name: notifiarr
+application_backup_service: notifiarr
+application_backup_paths:
+  - /etc/notifiarr
+application_backup_restore_owner: notifiarr
+application_backup_restore_group: notifiarr

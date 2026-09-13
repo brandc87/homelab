@@ -13,6 +13,15 @@ repos:
       - id: terraform_fmt
       - id: terraform_tflint
 
+  - repo: local
+    hooks:
+      - id: tofu-validate
+        name: OpenTofu validate
+        entry: tofu -chdir=terraform/proxmox validate
+        language: system
+        pass_filenames: false
+        files: ^terraform/proxmox/.*\.tf$
+
   - repo: https://github.com/adrienverge/yamllint
     rev: "v1.38.0"
     hooks:

@@ -1,0 +1,6 @@
+---
+- name: Deploy SABnzbd
+  hosts: sabnzbd_servers
+  serial: 1
+  roles:
+    - sabnzbd
